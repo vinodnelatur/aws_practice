@@ -1,7 +1,7 @@
 Parameters:
-    VPCname:
-      Description: Create a VPC with the following name
-      Type: String
+    KeyPair:
+      Description: Use this keypair to SSH into the instances
+      Type: AWS::EC2::KeyPair::KeyName
 Resources:
     MyVpc:
       Type: AWS::EC2::VPC
@@ -27,23 +27,43 @@ Resources:
         Tags:
           Keys: Application
           Value: !Ref "AWS::StackId"
-
-<internet_gateway>
-<attach_gateway>
-<route_tables>
-<subnet_to_route_table_association>
-<Inbound_acl_entry>
-<outbound_acl_entry>
-<load_balancer> <do we need Auto scale??? >
-<server_group>
-<launch_config>
-<ec2_instances_with_ebs*2>
-    <launch with metadata configuration of a web server>
-<ec2_instances_secruty gorup>
-<route53_health_check>
-<cloudwatch_metrics_cpu>
-
-
-          
-        
-      
+    Subnet3:
+      Type: AWS::EC2::Subnet
+      Description: Create Subnet3 to have the ELB and other systems which are internet facing
+      Properties:
+        VpcId: !Ref MyVpc
+        CidrBlock: 10.0.3.0/24
+        AvailabilityZone: "ap-southeast-2a"
+        Tags:
+         Keys: Application
+         Value: !Ref "AWS::StackId"
+    InternetGateway:
+       Type: AWS::EC2::InternetGateway
+       Properties:
+        Tags:
+          Keys: Application
+          Value: !Ref "AWS::StackId"
+    AttachGateway:
+       Type: AWS::EC2::VPCGatewayAttachment
+       Properties:
+        VpcId: !Ref MyVpc
+        InternetGatewayId: !Ref InternetGateway
+    RouteTable:
+      Type: AWS::EC2::RouteTable
+      Properties:
+        VpcId: !Ref MyVpc
+        Tags:
+         Keys: Application
+         Value: !Ref "AWS::StackId"
+    Route:
+      Type: AWS::EC2::Route
+      DependsOn: "AttachGateway"
+      Properties:
+        RouteTableId: !Ref AttachGateway
+        DestinationCidrBlock: "0.0.0.0/0"
+        GatewayId: !Ref InternetGateway
+    SubnetRouteTableAssociation:
+      Type: AWS:EC2::SubnetRouteTableAssociation
+      Properties:
+        SubnetId: !Ref Subnet3
+        RouteTableId: !Ref RouteTable
