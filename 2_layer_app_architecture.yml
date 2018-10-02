@@ -1,0 +1,32 @@
+Parameters:
+    VPCname:
+      Description: Create a VPC with the following name
+      Type: String
+Resources:
+    MyVpc:
+      Type: AWS::EC2::VPC
+      Properties:
+        CidrBlock: 10.0.0.0/16
+    Subnet1:
+      Type: AWS::EC2::Subnet
+      Description: Create Subnet1 for placing EC2 server1
+      Properties:
+        VpcId: !Ref MyVpc
+        CidrBlock: 10.0.1.0/24
+        AvailabilityZone: "ap-southeast-2a"
+        Tags:
+          Keys: Application
+          Value: !Ref "AWS::StackId"
+    Subnet2:
+      Type: AWS::EC2::Subnet
+      Description: Create Subnet2 for placing EC2 server2
+      Properties:
+        VpcId: !Ref MyVpc
+        CidrBlock: 10.0.2.0/24
+        AvailabilityZone: "ap-southeast-2b"
+        Tags:
+          Keys: Application
+          Value: !Ref "AWS::StackId"
+          
+        
+      

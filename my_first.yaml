@@ -1,0 +1,10 @@
+Resources:
+  Ec2Instance:
+    Type: AWS::EC2::Instance
+    Properties:
+      InstanceType: t2.micro
+      ImageId: ami-cfe4b2b0 # Amazon Linux AMI in Sydney
+      Tags:
+        - Key: Name
+          Value: A simple example
+            
