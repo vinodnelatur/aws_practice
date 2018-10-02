@@ -27,6 +27,23 @@ Resources:
         Tags:
           Keys: Application
           Value: !Ref "AWS::StackId"
+
+<internet_gateway>
+<attach_gateway>
+<route_tables>
+<subnet_to_route_table_association>
+<Inbound_acl_entry>
+<outbound_acl_entry>
+<load_balancer> <do we need Auto scale??? >
+<server_group>
+<launch_config>
+<ec2_instances_with_ebs*2>
+    <launch with metadata configuration of a web server>
+<ec2_instances_secruty gorup>
+<route53_health_check>
+<cloudwatch_metrics_cpu>
+
+
           
         
       
