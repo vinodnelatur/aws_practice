@@ -1,0 +1,63 @@
+Parameters:
+    KeyPair:
+      Description: Use this keypair to SSH into the instances
+      Type: AWS::EC2::KeyPair::KeyName
+Resources:    
+    IAM:
+      Type: AWS::IAM::InstanceProfile
+      Properties:
+        Roles:
+          - ansible-server
+      #  InstanceProfileName: ansible
+    Ansible:
+       Type: 'AWS::EC2::Instance'
+       Properties:
+        InstanceType: t2.micro
+        ImageId: ami-67589505 # RHEL 7 AMI in Sydney
+        KeyName: !Ref KeyPair
+        IamInstanceProfile: !Ref IAM
+        Tags:
+          - Key: "Name"
+            Value: "Ansible-Control-Server"
+        UserData:
+          'Fn::Base64':
+            !Sub |
+                #!/bin/bash -xe
+                #Ensure AWS CFN Bootstrap is the latest
+                sudo yum install -y unzip
+                curl "https://s3.amazonaws.com/aws-cli/awscli-bundle.zip" -o "awscli-bundle.zip"
+                unzip awscli-bundle.zip
+                sudo ./awscli-bundle/install -i /usr/local/aws -b /usr/local/bin/aws
+                #Install Packages
+                sudo rpm -Uvh https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm
+                #Install PIP
+                sudo curl "https://bootstrap.pypa.io/get-pip.py" -o "get-pip.py"
+                python get-pip.py
+                #sudo pip install --upgrade pip
+                #Additional boto package
+                sudo pip install boto
+                sudo pip install boto3
+                #Install Ansible
+                yum -y install ansible
+                #setting ansible permission for directories
+                sudo chmod 777 -R /etc/ansible
+                #Install Roles 
+                ansible-galaxy install arjunkapur95.jenkinsrole --roles-path=/etc/ansible/roles
+                #append hosts into the file to start the ansible script
+                sed -i '$ a \[local]\nlocalhost\n[jenkins]\n' /etc/ansible/hosts
+                #Need to source the ansible playbook from GIT
+                sudo yum -y install git
+                #Need to copy the ansible playbook
+                cd /etc/ansible
+                git clone https://github.com/arjunkapur95/AnsibleJenkinsYaml.git   
+                #Modify the config file to have the key put in
+                #sed -i '/#private_key_file/ a private_key_file = \/etc\/ansible\/AnsibleJenkinsYaml\/sydney_keypair_2\.pem' /etc/ansible/ansible.cfg
+                sed -i '/#host_key_checking/ a host_key_checking = False' /etc/ansible/ansible.cfg
+                #change permission
+                sudo chmod 600 '/etc/ansible/AnsibleJenkinsYaml/sydney_keypair_2.pem'            
+                #Start Jenkins installation
+                /usr/bin/ansible-playbook -i /etc/ansible/hosts /etc/ansible/AnsibleJenkinsYaml/ansible-jenkins.yml --private /etc/ansible/AnsibleJenkinsYaml/sydney_keypair_2.pem
+                #Install Bamboo
+                #ansible-galaxy install arjunkapur95.bamboorolecicd --roles-path=/etc/ansible/roles
+            
+              
